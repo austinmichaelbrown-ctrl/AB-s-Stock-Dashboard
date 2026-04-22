@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AB's Stock Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 40px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        h1 {
+            font-size: 2.5em;
+            color: #333;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subtitle {
+            color: #666;
+            font-size: 1.1em;
+        }
+
+        .input-section {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        input {
+            flex: 1;
+            min-width: 200px;
+            padding: 12px 16px;
+            font-size: 1em;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            transition: border-color 0.3s;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        button {
+            padding: 12px 28px;
+            font-size: 1em;
+            font-weight: 600;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            white-space: nowrap;
+        }
+
+        button:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .table-wrapper {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        thead {
+            background: #f8f9fa;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        th {
+            padding: 16px;
+            text-align: left;
+            font-weight: 600;
+            color: #333;
+            font-size: 0.95em;
+        }
+
+        td {
+            padding: 14px 16px;
+            border-bottom: 1px solid #e0e0e0;
+            color: #555;
+        }
+
+        tbody tr:hover {
+            background: #f8f9fa;
+        }
+
+        tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .symbol {
+            font-weight: 600;
+            color: #667eea;
+            font-size: 1.05em;
+        }
+
+        .price {
+            font-weight: 600;
+            color: #333;
+            font-size: 1.05em;
+        }
+
+        .positive {
+            color: #10b981;
+            font-weight: 500;
+        }
+
+        .negative {
+            color: #ef4444;
+            font-weight: 500;
+        }
+
+        .timestamp {
+            font-size: 0.9em;
+            color: #999;
+        }
+
+        .message {
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            text-align: center;
+            font-weight: 500;
+        }
+
+        .loading {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .error {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .success {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #999;
+        }
+
+        .empty-state svg {
+            width: 60px;
+            height: 60px;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+
+        .sections {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 30px;
+            margin-top: 30px;
+        }
+
+        @media (min-width: 1200px) {
+            .sections {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        .section {
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 24px;
+            background: #f9fafb;
+        }
+
+        .section h2 {
+            font-size: 1.3em;
+            color: #333;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .section.watchlist {
+            border-color: #667eea;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
+        }
+
+        .section.watchlist h2 {
+            color: #667eea;
+        }
+
+        .search-section {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+
+        .search-controls {
+            display: flex;
+            gap: 12px;
+        }
+
+        .search-controls input {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .search-controls button {
+            white-space: nowrap;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📈 AB's Stock Dashboard</h1>
+            <p class="subtitle">Real-time stock quotes powered by Finnhub</p>
+        </header>
+
+        <div class="input-section search-section">
+            <div class="search-controls">
+                <input 
+                    type="text" 
+                    id="tickerInput" 
+                    placeholder="Enter stock ticker (e.g., AAPL, GOOGL, TSLA)"
+                    autocomplete="off"
+                >
+                <button id="loadBtn" onclick="fetchQuote()">Load Quote</button>
+            </div>
+        </div>
+
+        <div id="messageContainer"></div>
+
+        <div class="sections">
+            <!-- Watchlist Section -->
+            <div class="section watchlist">
+                <h2>⭐ Watchlist</h2>
+                <div class="table-wrapper">
+                    <table id="watchlistTable">
+                        <thead>
+                            <tr>
+                                <th>Symbol</th>
+                                <th>Price</th>
+                                <th>Change</th>
+                                <th>% Change</th>
+                                <th>Updated</th>
+                            </tr>
+                        </thead>
+                        <tbody id="watchlistBody">
+                        </tbody>
+                    </table>
+                    <div id="watchlistEmpty" class="empty-state">
+                        <p>Loading watchlist...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Search Results Section -->
+            <div class="section">
+                <h2>🔍 Search Results</h2>
+                <div class="table-wrapper">
+                    <table id="resultsTable" style="display: none;">
+                        <thead>
+                            <tr>
+                                <th>Symbol</th>
+                                <th>Price</th>
+                                <th>Change</th>
+                                <th>% Change</th>
+                                <th>Updated</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBody">
+                        </tbody>
+                    </table>
+                    <div id="emptyState" class="empty-state">
+                        <p>Enter a stock ticker above and click "Load Quote" to search</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Finnhub API key
+        const API_KEY = 'd7khjepr01qiqbcudv90d7khjepr01qiqbcudv9g';
+        const API_BASE = 'https://finnhub.io/api/v1';
+
+        const tickerInput = document.getElementById('tickerInput');
+        const loadBtn = document.getElementById('loadBtn');
+        const messageContainer = document.getElementById('messageContainer');
+        const resultsTable = document.getElementById('resultsTable');
+        const tableBody = document.getElementById('tableBody');
+        const emptyState = document.getElementById('emptyState');
+        const watchlistTable = document.getElementById('watchlistTable');
+        const watchlistBody = document.getElementById('watchlistBody');
+        const watchlistEmpty = document.getElementById('watchlistEmpty');
+
+        // Allow Enter key to trigger fetch
+        tickerInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                fetchQuote();
+            }
+        });
+
+        async function fetchQuote() {
+            const ticker = tickerInput.value.trim().toUpperCase();
+
+            // Validation
+            if (!ticker) {
+                showMessage('Please enter a stock ticker', 'error');
+                return;
+            }
+
+            if (!API_KEY || API_KEY === 'YOUR_FINNHUB_API_KEY_HERE') {
+                showMessage('Please set your Finnhub API key in the script', 'error');
+                return;
+            }
+
+            // Disable button and show loading state
+            loadBtn.disabled = true;
+            showMessage(`Loading quote for ${ticker}...`, 'loading');
+
+            try {
+                // Fetch quote data
+                const response = await fetch(
+                    `${API_BASE}/quote?symbol=${ticker}&token=${API_KEY}`
+                );
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+
+                // Check if we got valid data
+                if (!data.c || data.c === 0) {
+                    showMessage(`No data found for ticker "${ticker}". Please check the symbol and try again.`, 'error');
+                    clearTable();
+                    return;
+                }
+
+                // Format and display the quote
+                displayQuote(ticker, data);
+                showMessage(`Quote updated for ${ticker}`, 'success');
+
+            } catch (error) {
+                console.error('Error fetching quote:', error);
+                showMessage(`Error fetching quote: ${error.message}`, 'error');
+                clearTable();
+            } finally {
+                loadBtn.disabled = false;
+            }
+        }
+
+        function displayQuote(symbol, data, append = false, targetTable = 'results') {
+            const price = data.c;
+            const change = data.d;
+            const percentChange = data.dp;
+            const timestamp = new Date(data.t * 1000).toLocaleString();
+
+            const row = `
+                <tr>
+                    <td class="symbol">${symbol}</td>
+                    <td class="price">$${price.toFixed(2)}</td>
+                    <td class="${change >= 0 ? 'positive' : 'negative'}">
+                        ${change >= 0 ? '+' : ''}${change.toFixed(2)}
+                    </td>
+                    <td class="${percentChange >= 0 ? 'positive' : 'negative'}">
+                        ${percentChange >= 0 ? '+' : ''}${percentChange.toFixed(2)}%
+                    </td>
+                    <td class="timestamp">${timestamp}</td>
+                </tr>
+            `;
+
+            if (targetTable === 'watchlist') {
+                if (append) {
+                    watchlistBody.innerHTML += row;
+                } else {
+                    watchlistBody.innerHTML = row;
+                }
+                watchlistTable.style.display = 'table';
+                watchlistEmpty.style.display = 'none';
+            } else {
+                if (append) {
+                    tableBody.innerHTML += row;
+                } else {
+                    tableBody.innerHTML = row;
+                }
+                resultsTable.style.display = 'table';
+                emptyState.style.display = 'none';
+            }
+        }
+
+        function clearTable() {
+            tableBody.innerHTML = '';
+            resultsTable.style.display = 'none';
+            emptyState.style.display = 'block';
+        }
+
+        function showMessage(text, type) {
+            messageContainer.innerHTML = `<div class="message ${type}">${text}</div>`;
+
+            // Auto-clear success and error messages after 5 seconds
+            if (type !== 'loading') {
+                setTimeout(() => {
+                    if (messageContainer.innerHTML.includes(text)) {
+                        messageContainer.innerHTML = '';
+                    }
+                }, 5000);
+            }
+        }
+
+        // Clear message on input change
+        tickerInput.addEventListener('input', () => {
+            messageContainer.innerHTML = '';
+        });
+
+        // Load multiple quotes at once
+        async function loadMultipleQuotes(tickers, targetTable = 'results') {
+            if (targetTable === 'results') {
+                tableBody.innerHTML = '';
+            } else {
+                watchlistBody.innerHTML = '';
+                showMessage(`Loading watchlist...`, 'loading');
+            }
+
+            let successCount = 0;
+            const promises = tickers.map(ticker =>
+                fetch(`${API_BASE}/quote?symbol=${ticker}&token=${API_KEY}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.c && data.c !== 0) {
+                            displayQuote(ticker, data, true, targetTable);
+                            successCount++;
+                        }
+                    })
+                    .catch(error => console.error(`Error fetching ${ticker}:`, error))
+            );
+
+            await Promise.all(promises);
+
+            if (targetTable === 'watchlist') {
+                watchlistTable.style.display = 'table';
+                watchlistEmpty.style.display = 'none';
+                showMessage(`Loaded ${successCount} of ${tickers.length} watchlist quotes`, 'success');
+            } else {
+                resultsTable.style.display = 'table';
+                emptyState.style.display = 'none';
+            }
+        }
+
+        // Load initial quotes on page load
+        const initialTickers = ['SPY', 'SNOW', 'META', 'CRM', 'GOOG', 'MSFT', 'AAPL', 'ISRG', 'QUAL', 'VOO', 'VIG', 'VTI', 'DIA', 'NVDA'];
+        window.addEventListener('load', () => {
+            loadMultipleQuotes(initialTickers, 'watchlist');
+        });
+    </script>
+</body>
+</html>

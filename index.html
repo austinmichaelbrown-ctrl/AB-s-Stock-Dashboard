@@ -98,7 +98,7 @@
             padding: 12px 24px;
             font-size: 16px;
             font-weight: 600;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: #4f46e5;
             color: white;
             border: none;
             border-radius: 8px;
@@ -118,7 +118,7 @@
 
         button:hover:not(:disabled) {
             transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+            box-shadow: 0 10px 20px rgba(79, 70, 229, 0.3);
         }
 
         button:disabled {
@@ -415,7 +415,6 @@
                                 <th>Price</th>
                                 <th>Change</th>
                                 <th>% Change</th>
-                                <th>Updated</th>
                             </tr>
                         </thead>
                         <tbody id="watchlistBody">
@@ -438,7 +437,6 @@
                                 <th>Price</th>
                                 <th>Change</th>
                                 <th>% Change</th>
-                                <th>Updated</th>
                             </tr>
                         </thead>
                         <tbody id="tableBody">
@@ -466,6 +464,8 @@
         const watchlistTable = document.getElementById('watchlistTable');
         const watchlistBody = document.getElementById('watchlistBody');
         const watchlistEmpty = document.getElementById('watchlistEmpty');
+        let lastWatchlistUpdate = null;
+        let lastSearchUpdate = null;
 
         // Allow Enter key to trigger fetch
         tickerInput.addEventListener('keypress', (e) => {
@@ -530,6 +530,15 @@
             const percentChange = data.dp;
             const timestamp = new Date(data.t * 1000).toLocaleString();
 
+            // Update the last update time for the appropriate table
+            if (targetTable === 'watchlist') {
+                lastWatchlistUpdate = timestamp;
+                updateHeaderTime('watchlist');
+            } else {
+                lastSearchUpdate = timestamp;
+                updateHeaderTime('search');
+            }
+
             const row = `
                 <tr>
                     <td class="symbol">${symbol}</td>
@@ -540,7 +549,6 @@
                     <td class="${percentChange >= 0 ? 'positive' : 'negative'}">
                         ${percentChange >= 0 ? '+' : ''}${percentChange.toFixed(2)}%
                     </td>
-                    <td class="timestamp">${timestamp}</td>
                 </tr>
             `;
 
@@ -560,6 +568,21 @@
                 }
                 resultsTable.style.display = 'table';
                 emptyState.style.display = 'none';
+            }
+        }
+
+        function updateHeaderTime(tableType) {
+            const headerSelector = tableType === 'watchlist' 
+                ? '.section.watchlist h2' 
+                : '.section:not(.watchlist) h2';
+            const headers = document.querySelectorAll(headerSelector);
+            const lastUpdate = tableType === 'watchlist' ? lastWatchlistUpdate : lastSearchUpdate;
+            
+            if (headers.length > 0 && lastUpdate) {
+                const header = headers[0];
+                const emoji = header.textContent.split(' ')[0];
+                const title = tableType === 'watchlist' ? 'Watchlist' : 'Search Results';
+                header.textContent = `${emoji} ${title} · Updated ${lastUpdate}`;
             }
         }
 
